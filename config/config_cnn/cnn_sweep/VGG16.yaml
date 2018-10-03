@@ -1,0 +1,93 @@
+name: VGG16
+conv_layers:
+  - name: conv1_1
+    l_img: 224
+    l_kern: 3
+    f_in: 3
+    f_out: 64
+    stride: 1
+    pad: 2
+  - name: conv1_2
+    l_img: 224
+    l_kern: 3
+    f_in: 64
+    f_out: 64
+    stride: 1
+    pad: 2
+  - name: conv2_1
+    l_img: 112
+    l_kern: 3
+    f_in: 64
+    f_out: 128
+    stride: 1
+    pad: 2
+  - name: conv2_2
+    l_img: 112
+    l_kern: 3
+    f_in: 128
+    f_out: 128
+    stride: 1
+    pad: 2
+  - name: conv3_1
+    l_img: 56
+    l_kern: 3
+    f_in: 128
+    f_out: 256
+    stride: 1
+    pad: 2
+  - name: conv3_2
+    l_img: 56
+    l_kern: 3
+    f_in: 256
+    f_out: 256
+    stride: 1
+    pad: 2
+  - name: conv3_3
+    l_img: 56
+    l_kern: 3
+    f_in: 256
+    f_out: 256
+    stride: 1
+    pad: 2
+  - name: conv4_1
+    l_img: 28
+    l_kern: 3
+    f_in: 256
+    f_out: 512
+    stride: 1
+    pad: 2
+  - name: conv4_2
+    l_img: 28
+    l_kern: 3
+    f_in: 512
+    f_out: 512
+    stride: 1
+    pad: 2
+  - name: conv4_3
+    l_img: 28
+    l_kern: 3
+    f_in: 512
+    f_out: 512
+    stride: 1
+    pad: 2
+  - name: conv5_1
+    l_img: 14
+    l_kern: 3
+    f_in: 512
+    f_out: 512
+    stride: 1
+    pad: 2
+  - name: conv5_2
+    l_img: 14
+    l_kern: 3
+    f_in: 512
+    f_out: 512
+    stride: 1
+    pad: 2
+  - name: conv5_3
+    l_img: 14
+    l_kern: 3
+    f_in: 512
+    f_out: 512
+    stride: 1
+    pad: 2

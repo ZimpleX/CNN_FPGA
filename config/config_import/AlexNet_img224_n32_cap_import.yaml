@@ -1,0 +1,36 @@
+network:
+    P_fft: 1
+    P_ifft: 1
+    P_hac: 1
+    q_2dfft: 32
+    q_2difft: 32
+    q_1dfft: 8  # fold this less, won't hurt
+    q_1difft: 8 # fold this less, won't hurt
+    q_hac: 8
+layer:
+    fin_pi:
+     - 32
+     - 32
+     - 32
+     - 32
+    Ni:
+     - 32
+     - 32
+     - 32
+     - 32
+    fout_pi:
+     - 32
+     - 32
+     - 32
+     - 32
+    di:
+     - 10
+     - 10
+     - 10
+     - 10
+    T_img_i:
+     - 1
+     - 1
+     - 1
+     - 1
+

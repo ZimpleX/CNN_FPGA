@@ -1,0 +1,36 @@
+network:
+    P_fft: 1
+    P_ifft: 1
+    P_hac: 2
+    q_2dfft: 8
+    q_2difft: 8
+    q_1dfft: 2  # fold this less, won't hurt
+    q_1difft: 2 # fold this less, won't hurt
+    q_hac: 1
+layer:
+    fin_pi:     # keep this to be 64 is fine, cuz design is comp bound for N=8
+     - 48
+     - 64
+     - 64
+     - 64
+    Ni:
+     - 8
+     - 8
+     - 8
+     - 8
+    fout_pi:
+     - 64
+     - 64
+     - 64
+     - 64
+    di:
+     - 2
+     - 2
+     - 2
+     - 2
+    T_img_i:
+     - 1
+     - 1
+     - 1
+     - 1
+

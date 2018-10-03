@@ -1,0 +1,6 @@
+clk_rate: 200000000       # unit: Hz
+bandwidth: 5000000000     # unit: byte/sec
+alm: 234720               # Altera ALM or Xilinx LUT
+dsp: 256
+memory: 6000000           # unit: bytes
+data_precision: 16        # n-bit fixed point

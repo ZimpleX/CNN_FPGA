@@ -1,0 +1,227 @@
+
+`include "common.vh"
+
+module afu_user #(CACHE_WIDTH = 416) (
+  input 		    clk, 
+  input 		    reset, 
+  input         kwe,
+  // Read Response
+  input 		    next_in,  
+  input [CACHE_WIDTH-1:0]  rd_rsp_data, 
+
+  // Write Request 
+  output [CACHE_WIDTH-1:0] wr_req_data, 
+  output reg		    next_out, 
+
+  // Start input signal
+  input         kin
+
+  );
+  localparam bw=11;
+  localparam f=77;
+  localparam N=16;
+
+  // create a registered rd_rsp_data
+  reg [CACHE_WIDTH-1:0] rd_rsp_data_reg;
+  reg next;
+  always@(posedge clk) begin
+    rd_rsp_data_reg <= rd_rsp_data;
+    next<=next_in?1:0;
+  end
+
+  complex fft_in [0:15];
+  complex fft_out [0:15];
+  complex_t fft_out_quan [0:15];
+  wire valid_fft_out;
+  wire valid_fft_in;
+  
+  assign valid_fft_in = next_in;
+
+  genvar i;
+  generate
+    for(i=1;i<=16;i=i+1) begin:fft_in_loop
+      assign fft_in[i-1].r={rd_rsp_data_reg[2*(bw+2)*i-(bw+2)-1:2*(bw+2)*(i-1)], {3{1'b0}}};
+      assign fft_in[i-1].i={rd_rsp_data_reg[2*(bw+2)*i-1:2*(bw+2)*i-(bw+2)], {3{1'b0}}};
+    end
+  endgenerate
+
+  fft_2d fft_2d_inst(
+  .clk(clk),    // Clock
+  .reset(reset),  // Synchronous reset active high
+  .in(fft_in),
+  .out(fft_out), // each time, there are two 16 complex data out
+  .valid_in(valid_fft_in),   // data is valid at the same cycle as valid_in
+  .valid_out(valid_fft_out)  // valid_out is 1 cycle ahead
+  );
+
+  generate
+    for(i=0;i<16;i=i+1) begin: fft_out_loop
+      assign fft_out_quan[i].r=fft_out[i].r[15:5];
+      assign fft_out_quan[i].i=fft_out[i].i[15:5];
+    end
+  endgenerate
+
+  wire count_out;
+
+  reg [11:0] waddr;
+  wire [bw*N*2-1:0] ram_out[N*2-1:0];
+  wire [bw*N*2-1:0] ram1_out[N*2-1:0];
+  wire we1,we2;
+  reg flag1,flag2,flag_hac_next,flag_hac_refresh;
+  
+  assign we1=flag1&valid_fft_out;
+  assign we2=flag2&valid_fft_out;
+  always@(posedge clk)begin
+    if(reset) begin
+      waddr<=0;
+      flag1<=1;
+      flag2<=0;
+      flag_hac_next<=0;
+      flag_hac_refresh<=0;
+    end
+    else begin
+      waddr<=(waddr==f*N)?0:waddr+1;
+      flag1<=(waddr==f*N && flag1)? 0:((~flag1)&(count_out==f*f));
+      flag2<=(waddr==f*N && flag2)? 0:((~flag2)&(count_out==f*f));
+      flag_hac_next<=flag1^flag2;
+      flag_hac_refresh<=flag_hac_next^flag1^flag2;
+    end
+
+  end
+
+  dual_port_ram #(11,11,77,16) ram1(
+    .clk(clk),    // Clock
+    .we(we1), // Write Enable
+    .data_in(fft_out_quan),
+    .write_address(waddr),
+    .read_address(count_out),
+    .data_out(ram1_out)
+  );
+
+  wire [bw*N*2-1:0] ram2_out[N*2-1:0];
+  dual_port_ram #(11,25,77,16) ram2(
+    .clk(clk),    // Clock
+    .we(we2), // Write Enable
+    .data_in(fft_out_quan),
+    .write_address(waddr),
+    .read_address(count_out),
+    .data_out(ram2_out)
+  );
+  assign ram_out = flag1?ram1_out:ram2_out;
+
+  wire [11:0] kaddr;
+  wire [bw*N*2-1:0] kern_out[N*2-1:0];
+  kern_ram #(11,25,77,16) ramkern(
+    .clk(clk),    // Clock
+    .we(kwe), // Write Enable
+    .data_in(kin),
+    .write_address(waddr),
+    .read_address(count_out),
+    .data_out(kern_out)
+  );
+
+  complex_t image1 [0:15][0:15];
+  complex_t kernel1 [0:15][0:15];
+  complex out1 [0:15][0:15];
+  complex_t image2 [0:15][0:15];
+  complex_t kernel2 [0:15][0:15];
+  complex out2 [0:15][0:15];
+  wire refresh;
+  wire hac_next;
+  wire hac_next_out;
+
+  genvar j;
+  generate
+    for(i=0;i<N;i=i+1) begin: hac_in_outer
+      for(j=0;j<N;j=j+1) begin: hac_in_inner
+        assign image1[i][j].r=ram_out[i][j*bw*2+bw-1:j*bw*2];
+        assign image1[i][j].i=ram_out[i][j*bw*2+2*bw-1:j*bw*2+bw];
+        assign image2[i][j].r=ram_out[i+N][j*bw*2+bw-1:j*bw*2];
+        assign image2[i][j].i=ram_out[i+N][j*bw*2+2*bw-1:j*bw*2+bw];
+        assign kernel1[i][j].r=kern_out[i][j*bw*2+bw-1:j*bw*2];
+        assign kernel1[i][j].i=kern_out[i][j*bw*2+2*bw-1:j*bw*2+bw];
+        assign kernel2[i][j].r=kern_out[i+N][j*bw*2+bw-1:j*bw*2];
+        assign kernel2[i][j].i=kern_out[i+N][j*bw*2+2*bw-1:j*bw*2+bw];
+      end
+    end
+  endgenerate
+
+  HAC hac1(
+  .clk(clk),
+  .reset(reset),
+  .image(image1),
+  .kernel(kernel1),
+  .out(out1),
+  .refresh(flag_hac_refresh),
+  .next(flag_hac_next),
+  .next_out(hac_next_out),
+  .count_out(count_out) 
+  );
+
+  HAC hac2(
+  .clk(clk),
+  .reset(reset),
+  .image(image2),
+  .kernel(kernel2),
+  .out(out2),
+  .refresh(flag_hac_refresh),
+  .next(flag_hac_next),
+  .next_out(),
+  .count_out() 
+  );
+
+  reg ifft_flag;
+
+  reg [31:0] hram[0:31][0:15];
+
+  reg [4:0] hram_addr;
+  wire valid_ifft_in;
+  wire valid_ifft_out;
+  complex ifft_in[0:15];
+  complex ifft_out[0:15];
+
+  always @ (posedge clk) begin
+    integer i,j;
+    if(reset) begin
+      ifft_flag<=0;
+      hram_addr<=0;
+    end
+    else begin
+      if(hac_next_out) begin
+        for(i=0;i<16;i=i+1) begin
+          for(j=0;j<16;j=j+1) begin
+            hram[i][j]<=out1[i][j];
+            hram[i+N][j]<=out2[i][j];
+          end
+        end
+      end
+      if(ifft_flag) begin
+        hram_addr<=(hram_addr==2*N)?0:hram_addr+1;
+      end
+      ifft_flag<=hac_next_out & (~(hram_addr==2*N));
+    end
+  end
+
+  assign ifft_in=hram[hram_addr];
+  assign valid_ifft_in = ifft_flag;
+  fft_2d ifft_2d_inst(
+  .clk(clk),    // Clock
+  .reset(reset),  // Synchronous reset active high
+  .in(ifft_in),
+  .out(ifft_out), // each time, there are two 16 complex data out
+  .valid_in(valid_ifft_in),   // data is valid at the same cycle as valid_in
+  .valid_out(valid_ifft_out)  // valid_out is 1 cycle ahead
+  );
+  generate
+    for(i=1;i<=16;i=i+1) begin:ifft_out_loop
+      assign wr_req_data[2*(bw+2)*i-1:2*(bw+2)*(i-1)]={ifft_out[i-1].r[bw+1:0],ifft_out[i-1].i[bw+1:0]};
+    end
+  endgenerate
+  assign next_out = valid_ifft_out;
+
+endmodule // afu_user
+
+
+
+
+

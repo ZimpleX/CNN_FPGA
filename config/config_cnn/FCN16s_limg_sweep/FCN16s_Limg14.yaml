@@ -1,0 +1,129 @@
+
+name: FCN-16s_Limg_14
+conv_layers:
+  - name: conv1_1   #1
+    l_img: 448      # c1
+    l_kern: 3  
+    f_in: 3     
+    f_out: 64   
+    stride: 1   
+    pad: 1
+  - name: conv1_2   # 2
+    l_img: 448      # c1
+    l_kern: 3  
+    f_in: 64
+    f_out: 64   
+    stride: 1   
+    pad: 1
+  - name: conv2_1   # 3
+    l_img: 224      # c2
+    l_kern: 3
+    f_in: 64
+    f_out: 128   
+    stride: 1  
+    pad: 1
+  - name: conv2_2   # 4
+    l_img: 224      # c2
+    l_kern: 3 
+    f_in: 128
+    f_out: 128   
+    stride: 1   
+    pad: 1
+  - name: conv3_1   # 5
+    l_img: 112      # c3
+    l_kern: 3 
+    f_in: 128
+    f_out: 256   
+    stride: 1   
+    pad: 1
+  - name: conv3_2   # 6
+    l_img: 112      # c3
+    l_kern: 3
+    f_in: 256
+    f_out: 256   
+    stride: 1   
+    pad: 1
+  - name: conv3_3   # 7
+    l_img: 112      # c3
+    l_kern: 3
+    f_in: 256
+    f_out: 256   
+    stride: 1   
+    pad: 1
+  - name: conv4_1   # 8
+    l_img: 56       # c4
+    l_kern: 3
+    f_in: 256
+    f_out: 512   
+    stride: 1   
+    pad: 1
+  - name: conv4_2   # 9
+    l_img: 56       # c4
+    l_kern: 3
+    f_in: 512
+    f_out: 512   
+    stride: 1   
+    pad: 1
+  - name: conv4_3   # 10
+    l_img: 56       # c4
+    l_kern: 3
+    f_in: 512
+    f_out: 512   
+    stride: 1   
+    pad: 1
+  - name: conv5_1   # 11
+    l_img: 28       # c5
+    l_kern: 3
+    f_in: 512
+    f_out: 512   
+    stride: 1   
+    pad: 1
+  - name: conv5_2   # 12
+    l_img: 28       # c5
+    l_kern: 3
+    f_in: 512
+    f_out: 512  
+    stride: 1   
+    pad: 1
+  - name: conv5_3   # 13
+    l_img: 28       # c5
+    l_kern: 3
+    f_in: 512
+    f_out: 512   
+    stride: 1   
+    pad: 1
+  - name: fc6       # 14
+    l_img: 14       # c6
+    l_kern: 7
+    f_in: 512
+    f_out: 4096   
+    stride: 1 
+    pad: 0
+  - name: fc7       # 15
+    l_img: 8       # c7
+    l_kern: 1
+    f_in: 4096
+    f_out: 4096   
+    stride: 1 
+    pad: 0
+  - name: score     # 16
+    l_img: 8       # c7
+    l_kern: 1
+    f_in: 4096
+    f_out: 21   
+    stride: 1   
+    pad: 0
+  - name: score_2   # 17
+    l_img: 16       # c8
+    l_kern: 4
+    f_in: 21
+    f_out: 21   
+    stride: 2
+    pad: 0
+  - name: score_pool4 # 18
+    l_img: 28       # c9
+    l_kern: 1
+    f_in: 512
+    f_out: 21   
+    stride: 1   
+    pad: 0

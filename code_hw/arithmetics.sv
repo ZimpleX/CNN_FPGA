@@ -1,0 +1,133 @@
+
+`include "common.vh"
+
+module complexMultAddCanonicalfxp16fxp16 (
+  input clk,    // Clock
+  input reset,
+  // data
+  input complex_t in0,
+  input complex_t in1,
+  input complex acc,
+  output complex out,
+  // control
+  input next,
+  output next_out
+);
+
+  wire [10:0] r0_minus_i0;
+  wire [10:0] r1_minus_i1;
+  wire [10:0] r1_add_i1;
+  wire [10:0] r0_reg, r1_reg, i0_reg;
+  wire [10:0] mult0_result, mult1_result, mult2_result;
+  wire [15:0] mult_r, mult_i;
+  shiftRegFIFO #(1, 11) shiftFIFO_r0(.X(in0.r), .Y(r0_reg), .clk(clk));
+  shiftRegFIFO #(1, 11) shiftFIFO_r1(.X(in1.r), .Y(r1_reg), .clk(clk));
+  shiftRegFIFO #(1, 11) shiftFIFO_i1(.X(in0.i), .Y(i0_reg), .clk(clk));
+  subfxp #(11, 1) sub0(.clk(clk), .a(in0.r), .b(in0.i), .q(r0_minus_i0));
+  subfxp #(11, 1) sub1(.clk(clk), .a(in1.r), .b(in1.i), .q(r1_minus_i1));
+  addfxp #(11, 1) add0(.clk(clk), .a(in1.r), .b(in1.i), .q(r1_add_i1));
+  multfix #(11, 2) mult0(.clk(clk), .rst(reset), .a(r0_minus_i0), .b(r1_reg), .q_sc(mult0_result), .q_unsc());
+  multfix #(11, 2) mult1(.clk(clk), .rst(reset), .a(i0_reg), .b(r1_minus_i1), .q_sc(mult1_result), .q_unsc());
+  multfix #(11, 2) mult2(.clk(clk), .rst(reset), .a(r1_add_i1), .b(r0_reg), .q_sc(mult2_result), .q_unsc());
+  addfxp #(16, 1) add1(.clk(clk), .a(mult0_result), .b(mult1_result), .q(mult_r));
+  subfxp #(16, 1) sub2(.clk(clk), .a(mult2_result), .b(mult0_result), .q(mult_i));
+  addfxp #(16, 1) add2(.clk(clk), .a(mult_r), .b(acc.r), .q(out.r));
+  addfxp #(16, 1) add3(.clk(clk), .a(mult_i), .b(acc.i), .q(out.i));
+
+  // delay 1 + 2 + 1 = 4
+  shiftRegFIFO #(5, 1) shiftFIFO_complex(.X(next), .Y(next_out), .clk(clk));
+
+
+endmodule
+
+
+// module multfxp24fxp24(clk, enable, rst, a, b, out);
+//   parameter WIDTH=24, CYCLES=6;
+//   input  [WIDTH-1:0]   a,b;
+//   output [2*WIDTH-1:0] out;
+//   input                clk, rst,enable;
+//   reg [2*WIDTH-1:0]    q[CYCLES-1:0];
+//   integer              i;
+
+//   assign               out = q[CYCLES-1];
+
+//   always @(posedge clk) begin
+//     q[0] <= a * b;
+//     for (i = 1; i < CYCLES; i=i+1) begin
+//         q[i] <= q[i-1];
+//     end
+//   end
+// endmodule 
+
+
+module multfix(clk, rst, a, b, q_sc, q_unsc);
+   parameter WIDTH=35, CYCLES=6;
+
+   input signed [WIDTH-1:0]    a,b;
+   output [WIDTH-1:0]          q_sc;
+   output [WIDTH-1:0]              q_unsc;
+
+   input                       clk, rst;
+   
+   reg signed [2*WIDTH-1:0]    q[CYCLES-1:0];
+   wire signed [2*WIDTH-1:0]   res;   
+   integer                     i;
+
+   assign                      res = q[CYCLES-1];   
+   
+   assign                      q_unsc = res[WIDTH-1:0];
+   assign                      q_sc = {res[2*WIDTH-1], res[2*WIDTH-4:WIDTH-2]};
+      
+   always @(posedge clk) begin
+      q[0] <= a * b;
+      for (i = 1; i < CYCLES; i=i+1) begin
+         q[i] <= q[i-1];
+      end
+   end
+                              
+endmodule 
+
+
+module addfxp(a, b, q, clk);
+
+   parameter width = 16, cycles=1;
+   
+   input signed [width-1:0]  a, b;
+   input                     clk;   
+   output signed [width-1:0] q;
+   reg signed [width-1:0]    res[cycles-1:0];
+
+   assign                    q = res[cycles-1];
+   
+   integer                   i;   
+   
+   always @(posedge clk) begin
+     res[0] <= a+b;
+      for (i=1; i < cycles; i = i+1)
+        res[i] <= res[i-1];
+      
+   end
+   
+endmodule
+
+module subfxp(a, b, q, clk);
+
+   parameter width = 16, cycles=1;
+   
+   input signed [width-1:0]  a, b;
+   input                     clk;   
+   output signed [width-1:0] q;
+   reg signed [width-1:0]    res[cycles-1:0];
+
+   assign                    q = res[cycles-1];
+   
+   integer                   i;   
+   
+   always @(posedge clk) begin
+     res[0] <= a-b;
+      for (i=1; i < cycles; i = i+1)
+        res[i] <= res[i-1];
+      
+   end
+  
+endmodule

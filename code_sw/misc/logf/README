@@ -1,0 +1,10 @@
+formatting printing / logging in applications
+---------------------------------------------
+stringf: formatting string
+    *   add tags ([INFO] / [WARN] / [ERROR]) to input string
+filef: formatting file related operation
+    *   write (formatted) log to file
+    *   create directories if not exist
+    *   file permission manipulation
+printf: formatting console print
+    *   output (formatted) message to console / terminal

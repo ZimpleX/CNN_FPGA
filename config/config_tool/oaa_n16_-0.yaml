@@ -1,0 +1,24 @@
+algo name: OaA_N_16_-0
+N avail:
+  - 16
+d max: 1     # the max batch folding factor that can be supported
+layer filter: 
+    type: deselect
+    index: 
+      - 0
+range P_hac:
+    start: 1
+    end: 4
+    stride: 1
+range T_img:
+    start: 1
+    end: 3
+    stride: 1
+range f_in:
+    start: 1
+    end: 80
+    stride: 2
+range f_out:
+    start: 10
+    end: 100
+    stride: 2

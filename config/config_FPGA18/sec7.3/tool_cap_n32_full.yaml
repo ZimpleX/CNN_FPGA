@@ -1,0 +1,22 @@
+algo name: CaP_N_32_full
+N avail:
+  - 32
+d max: -1     # the max batch folding factor that can be supported
+layer filter: 
+    type: all
+range P_hac:
+    start: -1
+    end: -1
+    stride: -1
+range T_img:
+    start: -1
+    end: -1
+    stride: -1
+range f_in:
+    start: -1
+    end: -1
+    stride: -1
+range f_out:
+    start: -1
+    end: -1
+    stride: -1

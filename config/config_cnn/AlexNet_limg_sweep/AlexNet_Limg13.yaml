@@ -1,0 +1,38 @@
+
+name: AlexNet_Limg_13
+conv_layers:
+  #- name: conv1 # conv layer i
+  #  l_img: 208 # image width/height
+  #  l_kern: 11  # kernel width/height
+  #  f_in: 3     # input feature maps
+  #  f_out: 96   # output feature maps
+  #  stride: 4   # conv stride
+  #  pad: 0
+  - name: conv2
+    l_img: 26
+    l_kern: 5
+    f_in: 96
+    f_out: 256
+    stride: 1
+    pad: 2
+  - name: conv3
+    l_img: 13
+    l_kern: 3
+    f_in: 256
+    f_out: 384
+    stride: 1
+    pad: 1
+  - name: conv4
+    l_img: 13
+    l_kern: 3
+    f_in: 384
+    f_out: 384
+    stride: 1
+    pad: 1
+  - name: conv5
+    l_img: 13
+    l_kern: 3
+    f_in: 384
+    f_out: 256
+    stride: 1
+    pad: 1
